@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>QuantumShield | Secure Login</title>
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            font-family:
+                "Segoe UI",
+                Arial,
+                sans-serif;
+
+            color: #e8f1ff;
+
+            background:
+                radial-gradient(
+                    circle at 20% 20%,
+                    rgba(0, 212, 255, 0.12),
+                    transparent 30%
+                ),
+                radial-gradient(
+                    circle at 80% 80%,
+                    rgba(124, 58, 237, 0.15),
+                    transparent 30%
+                ),
+                #050914;
+
+            overflow: hidden;
+        }
+
+        /* Background grid */
+
+        body::before {
+
+            content: "";
+
+            position: fixed;
+
+            inset: 0;
+
+            pointer-events: none;
+
+            background-image:
+                linear-gradient(
+                    rgba(255,255,255,0.018) 1px,
+                    transparent 1px
+                ),
+                linear-gradient(
+                    90deg,
+                    rgba(255,255,255,0.018) 1px,
+                    transparent 1px
+                );
+
+            background-size: 45px 45px;
+
+            mask-image:
+                linear-gradient(
+                    to bottom,
+                    black,
+                    transparent
+                );
+        }
+
+        /* Glowing background circles */
+
+        .glow {
+
+            position: fixed;
+
+            border-radius: 50%;
+
+            filter: blur(70px);
+
+            pointer-events: none;
+
+            opacity: 0.25;
+
+        }
+
+        .glow-one {
+
+            width: 250px;
+            height: 250px;
+
+            background: #00d4ff;
+
+            top: -100px;
+            left: -80px;
+
+        }
+
+        .glow-two {
+
+            width: 280px;
+            height: 280px;
+
+            background: #7c3aed;
+
+            bottom: -120px;
+            right: -90px;
+
+        }
+
+        /* Main container */
+
+        .login-container {
+
+            width: 90%;
+            max-width: 1050px;
+
+            min-height: 620px;
+
+            display: grid;
+
+            grid-template-columns: 1fr 1fr;
+
+            position: relative;
+
+            z-index: 2;
+
+            border-radius: 28px;
+
+            overflow: hidden;
+
+            background:
+                rgba(255,255,255,0.045);
+
+            border:
+                1px solid rgba(255,255,255,0.10);
+
+            backdrop-filter: blur(25px);
+
+            box-shadow:
+                0 30px 90px rgba(0,0,0,0.55);
+
+            animation: appear 0.8s ease;
+
+        }
+
+        /* Left section */
+
+        .brand-section {
+
+            display: flex;
+
+            flex-direction: column;
+
+            justify-content: center;
+
+            padding: 55px;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(0,212,255,0.09),
+                    rgba(124,58,237,0.12)
+                );
+
+            border-right:
+                1px solid rgba(255,255,255,0.07);
+
+            position: relative;
+
+            overflow: hidden;
+
+        }
+
+        .brand-section::after {
+
+            content: "⚛";
+
+            position: absolute;
+
+            right: -30px;
+
+            bottom: -55px;
+
+            font-size: 260px;
+
+            opacity: 0.035;
+
+            transform: rotate(15deg);
+
+        }
+
+        .logo {
+
+            width: 72px;
+            height: 72px;
+
+            display: flex;
+
+            justify-content: center;
+            align-items: center;
+
+            border-radius: 20px;
+
+            font-size: 38px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #00d4ff,
+                    #7c3aed
+                );
+
+            box-shadow:
+                0 0 40px rgba(0,212,255,0.25);
+
+            margin-bottom: 25px;
+
+            animation: pulse 3s infinite;
+
+        }
+
+        .brand-section h1 {
+
+            font-size: 42px;
+
+            letter-spacing: 1px;
+
+            margin-bottom: 8px;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    #ffffff,
+                    #67e8f9,
+                    #c4b5fd
+                );
+
+            background-clip: text;
+
+            color: transparent;
+
+        }
+
+        .tagline {
+
+            color: #67e8f9;
+
+            font-size: 12px;
+
+            letter-spacing: 2.5px;
+
+            margin-bottom: 25px;
+
+        }
+
+        .brand-description {
+
+            color: #91a4c1;
+
+            font-size: 14px;
+
+            line-height: 1.8;
+
+            max-width: 420px;
+
+        }
+
+        .security-points {
+
+            margin-top: 30px;
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 13px;
+
+        }
+
+        .security-point {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 11px;
+
+            color: #b8c7dc;
+
+            font-size: 13px;
+
+        }
+
+        .point-icon {
+
+            width: 28px;
+            height: 28px;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 8px;
+
+            background:
+                rgba(103,232,249,0.08);
+
+            border:
+                1px solid rgba(103,232,249,0.15);
+
+        }
+
+        /* Login section */
+
+        .login-section {
+
+            display: flex;
+
+            justify-content: center;
+            align-items: center;
+
+            padding: 45px;
+
+            background:
+                rgba(2,6,18,0.40);
+
+        }
+
+        .login-box {
+
+            width: 100%;
+
+            max-width: 390px;
+
+        }
+
+        .login-box h2 {
+
+            font-size: 29px;
+
+            margin-bottom: 8px;
+
+        }
+
+        .login-subtitle {
+
+            color: #7184a3;
+
+            font-size: 13px;
+
+            margin-bottom: 30px;
+
+        }
+
+        /* Form */
+
+        .form-group {
+
+            margin-bottom: 20px;
+
+        }
+
+        .form-group label {
+
+            display: block;
+
+            margin-bottom: 8px;
+
+            color: #b9c7da;
+
+            font-size: 12px;
+
+            font-weight: 600;
+
+            letter-spacing: 0.4px;
+
+        }
+
+        .input-wrapper {
+
+            position: relative;
+
+        }
+
+        .input-icon {
+
+            position: absolute;
+
+            left: 14px;
+
+            top: 50%;
+
+            transform: translateY(-50%);
+
+            font-size: 17px;
+
+            opacity: 0.75;
+
+        }
+
+        .input-wrapper input {
+
+            width: 100%;
+
+            padding: 14px 45px;
+
+            border-radius: 11px;
+
+            border:
+                1px solid rgba(255,255,255,0.10);
+
+            background:
+                rgba(255,255,255,0.035);
+
+            color: #ffffff;
+
+            outline: none;
+
+            font-size: 14px;
+
+            transition: 0.3s;
+
+        }
+
+        .input-wrapper input::placeholder {
+
+            color: #526681;
+
+        }
+
+        .input-wrapper input:focus {
+
+            border-color:
+                rgba(103,232,249,0.45);
+
+            background:
+                rgba(103,232,249,0.035);
+
+            box-shadow:
+                0 0 0 3px rgba(103,232,249,0.06);
+
+        }
+
+        .toggle-password {
+
+            position: absolute;
+
+            right: 14px;
+
+            top: 50%;
+
+            transform: translateY(-50%);
+
+            border: none;
+
+            background: transparent;
+
+            color: #7184a3;
+
+            cursor: pointer;
+
+            font-size: 16px;
+
+        }
+
+        .toggle-password:hover {
+
+            color: #67e8f9;
+
+        }
+
+        /* Login button */
+
+        .login-btn {
+
+            width: 100%;
+
+            padding: 14px;
+
+            margin-top: 8px;
+
+            border: none;
+
+            border-radius: 11px;
+
+            cursor: pointer;
+
+            color: white;
+
+            font-size: 14px;
+
+            font-weight: 700;
+
+            letter-spacing: 0.3px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #0891b2,
+                    #6d28d9
+                );
+
+            box-shadow:
+                0 10px 30px rgba(8,145,178,0.20);
+
+            transition: 0.3s;
+
+        }
+
+        .login-btn:hover {
+
+            transform: translateY(-2px);
+
+            box-shadow:
+                0 15px 35px rgba(8,145,178,0.32);
+
+        }
+
+        .login-btn:active {
+
+            transform: translateY(0);
+
+        }
+
+        /* Signup */
+
+        .signup {
+
+            text-align: center;
+
+            margin-top: 25px;
+
+            color: #647894;
+
+            font-size: 13px;
+
+        }
+
+        .signup a {
+
+            color: #67e8f9;
+
+            text-decoration: none;
+
+            font-weight: 600;
+
+            transition: 0.3s;
+
+        }
+
+        .signup a:hover {
+
+            color: #c4b5fd;
+
+        }
+
+        /* Security badge */
+
+        .security-badge {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            gap: 7px;
+
+            margin-top: 30px;
+
+            color: #58708f;
+
+            font-size: 10px;
+
+            letter-spacing: 0.8px;
+
+        }
+
+        .secure-dot {
+
+            width: 7px;
+            height: 7px;
+
+            border-radius: 50%;
+
+            background: #4ade80;
+
+            box-shadow:
+                0 0 10px #4ade80;
+
+        }
+
+        /* Animations */
+
+        @keyframes appear {
+
+            from {
+
+                opacity: 0;
+
+                transform: translateY(20px) scale(0.98);
+
+            }
+
+            to {
+
+                opacity: 1;
+
+                transform: translateY(0) scale(1);
+
+            }
+
+        }
+
+        @keyframes pulse {
+
+            0%, 100% {
+
+                box-shadow:
+                    0 0 30px rgba(0,212,255,0.20);
+
+            }
+
+            50% {
+
+                box-shadow:
+                    0 0 50px rgba(0,212,255,0.40);
+
+            }
+
+        }
+
+        /* Responsive */
+
+        @media (max-width: 800px) {
+
+            .login-container {
+
+                grid-template-columns: 1fr;
+
+                min-height: auto;
+
+                max-width: 500px;
+
+            }
+
+            .brand-section {
+
+                padding: 38px 30px;
+
+                border-right: none;
+
+                border-bottom:
+                    1px solid rgba(255,255,255,0.07);
+
+            }
+
+            .brand-section h1 {
+
+                font-size: 34px;
+
+            }
+
+            .brand-description {
+
+                display: none;
+
+            }
+
+            .security-points {
+
+                display: none;
+
+            }
+
+            .login-section {
+
+                padding: 40px 30px;
+
+            }
+
+        }
+
+        @media (max-width: 450px) {
+
+            .login-container {
+
+                width: 94%;
+
+                border-radius: 20px;
+
+            }
+
+            .brand-section {
+
+                padding: 30px 24px;
+
+            }
+
+            .login-section {
+
+                padding: 32px 24px;
+
+            }
+
+            .logo {
+
+                width: 60px;
+                height: 60px;
+
+                font-size: 30px;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <div class="glow glow-one"></div>
+    <div class="glow glow-two"></div>
+
+
+    <div class="login-container">
+
+
+        <!-- BRAND SECTION -->
+
+        <section class="brand-section">
+
+            <div class="logo">
+                ⚛️
+            </div>
+
+            <h1>
+                QuantumShield
+            </h1>
+
+            <div class="tagline">
+                POST-QUANTUM SECURITY SUITE
+            </div>
+
+            <p class="brand-description">
+
+                Welcome to your secure digital command
+                center. Protect sensitive files and
+                digital assets using modern cryptographic
+                technologies designed for the post-quantum era.
+
+            </p>
+
+
+            <div class="security-points">
+
+                <div class="security-point">
+
+                    <span class="point-icon">
+                        🔐
+                    </span>
+
+                    AES File Encryption
+
+                </div>
+
+
+                <div class="security-point">
+
+                    <span class="point-icon">
+                        ⚛️
+                    </span>
+
+                    ML-KEM-768 Post-Quantum Security
+
+                </div>
+
+
+                <div class="security-point">
+
+                    <span class="point-icon">
+                        🛡️
+                    </span>
+
+                    AI-Powered Phishing Detection
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- LOGIN SECTION -->
+
+        <section class="login-section">
+
+            <div class="login-box">
+
+                <h2>
+                    Secure Login
+                </h2>
+
+                <p class="login-subtitle">
+                    Access your QuantumShield security dashboard
+                </p>
+
+
+                <form method="POST" action="/">
+
+    <!-- USERNAME -->
+
+    <div class="form-group">
+
+        <label for="username">
+            USERNAME
+        </label>
+
+        <div class="input-wrapper">
+
+            <span class="input-icon">
+                👤
+            </span>
+
+            <input
+                type="text"
+                id="username"
+                name="username"
+                placeholder="Enter your username"
+                autocomplete="username"
+                required
+            >
+
+        </div>
+
+    </div>
+
+
+    <!-- EMAIL -->
+
+    <div class="form-group">
+
+        <label for="email">
+            EMAIL
+        </label>
+
+        <div class="input-wrapper">
+
+            <span class="input-icon">
+                📧
+            </span>
+
+            <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="Enter your email"
+                autocomplete="email"
+                required
+            >
+
+        </div>
+
+    </div>
+
+
+    <!-- PASSWORD -->
+
+    <div class="form-group">
+
+        <label for="password">
+            PASSWORD
+        </label>
+
+        <div class="input-wrapper">
+
+            <span class="input-icon">
+                🔑
+            </span>
+
+            <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+                required
+            >
+
+            <button
+                type="button"
+                class="toggle-password"
+                onclick="togglePassword()"
+                aria-label="Show or hide password"
+            >
+                👁
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <button
+        type="submit"
+        class="login-btn"
+    >
+        🚀 Secure Login
+    </button>
+
+</form>
+
+                <div class="signup">
+
+                    Don't have an account?
+
+                    <a href="/signup">
+                        Create Account
+                    </a>
+
+                </div>
+
+
+                <div class="security-badge">
+
+                    <span class="secure-dot"></span>
+
+                    QUANTUMSHIELD SECURE CONNECTION
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </div>
+
+
+    <script>
+
+        function togglePassword() {
+
+            const password =
+                document.getElementById("password");
+
+            const button =
+                document.querySelector(".toggle-password");
+
+            if (password.type === "password") {
+
+                password.type = "text";
+
+                button.textContent = "🙈";
+
+            } else {
+
+                password.type = "password";
+
+                button.textContent = "👁";
+
+            }
+
+        }
+
+    </script>
+
+</body>
+
+</html>

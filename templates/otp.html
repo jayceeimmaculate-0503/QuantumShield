@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuantumShield - OTP Verification</title>
+    <style>
+        body {
+            background-color: #0b0f19;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: #111827;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            border: 1px solid #1f2937;
+        }
+        h2 {
+            color: #00f3ff;
+            margin-bottom: 10px;
+        }
+        p {
+            color: #9ca3af;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 18px;
+            letter-spacing: 5px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        input[type="text"]:focus {
+            border-color: #00f3ff;
+            outline: none;
+            box-shadow: 0 0 8px rgba(0, 243, 255, 0.3);
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #00f3ff;
+            color: #0b0f19;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        button:hover {
+            background: #00c2cb;
+        }
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        .success-msg {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        .resend-container {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #9ca3af;
+        }
+        .resend-container a {
+            color: #00f3ff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .resend-container a:hover {
+            text-decoration: underline;
+        }
+        .back-link {
+            margin-top: 20px;
+            display: block;
+            color: #9ca3af;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        .back-link:hover {
+            color: #00f3ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>QuantumShield</h2>
+        <p>Enter the 6-digit verification code sent to your email.</p>
+
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+
+        {% if message %}
+            <div class="success-msg">{{ message }}</div>
+        {% endif %}
+
+        <form method="POST">
+            <div class="form-group">
+                <input type="text" name="otp" maxlength="6" placeholder="------" required autocomplete="off">
+            </div>
+            <button type="submit">Verify OTP</button>
+        </form>
+
+        <div class="resend-container">
+            Didn't receive the code? <a href="/resend-otp">Resend OTP</a>
+        </div>
+
+        <a href="/" class="back-link">Back to Login</a>
+    </div>
+</body>
+</html>

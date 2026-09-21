@@ -1,0 +1,374 @@
+﻿===== APP.PY TOP =====
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    session,
+    jsonify,
+    send_from_directory
+)
+
+from werkzeug.utils import secure_filename
+
+from encryption.phishing_utils import predict_url
+
+from encryption.pqc_utils import (
+    generate_keypair,
+    encapsulate,
+    decapsulate
+)
+
+from encryption.aes_utils import (
+    encrypt_file,
+    decrypt_file
+)
+
+from encryption.hybrid_pqc_utils import (
+    hybrid_encrypt_file,
+    hybrid_decrypt_file
+)
+
+from database.models import (
+    init_db,
+    add_user,
+    check_login,
+    add_activity
+)
+
+import os
+import sqlite3
+
+
+# =========================================================
+# APPLICATION SETUP
+# =========================================================
+
+app = Flask(__name__)
+
+app.secret_key = "quantumshield_secret_key_2026"
+
+
+BASE_DIR = os.path.dirname(
+    os.path.abspath(__file__)
+)
+
+
+UPLOAD_FOLDER = os.path.join(
+    BASE_DIR,
+    "static",
+    "uploads"
+)
+
+
+DATABASE = os.path.join(
+    BASE_DIR,
+    "database",
+    "quantumshield.db"
+)
+
+
+os.makedirs(
+    UPLOAD_FOLDER,
+    exist_ok=True
+)
+
+
+# =========================================================
+# DASHBOARD OPERATION RESULT HELPER
+# =========================================================
+
+def set_operation_result(
+    operation,
+    status,
+    title,
+    message,
+    filename="",
+    output_file="",
+    algorithm="",
+    integrity="",
+    download_file=""
+):
+
+    session["operation_result"] = {
+
+        "operation": operation,
+
+        "status": status,
+
+        "title": title,
+
+        "message": message,
+
+        "filename": filename,
+
+        "output_file": output_file,
+
+        "algorithm": algorithm,
+
+        "integrity": integrity,
+
+        "download_file": download_file
+    }
+
+
+# =========================================================
+# LOGIN
+# =========================================================
+
+@app.route(
+    "/",
+    methods=["GET", "POST"]
+===== APP.PY 630-700 =====
+            "FAILED"
+        )
+
+
+        set_operation_result(
+            operation="PQC_TEST",
+            status="ERROR",
+            title="PQC Security Test Error",
+            message=str(e),
+            filename="ML-KEM-768",
+            algorithm="ML-KEM-768"
+        )
+
+
+        return redirect(
+            "/dashboard"
+        )
+
+
+# =========================================================
+# QUANTUMSHIELD HYBRID PQC ENCRYPTION
+#
+# ML-KEM-768 + SHA-256 + AES-256-GCM
+# =========================================================
+
+@app.route(
+    "/hybrid-encrypt",
+    methods=["POST"]
+)
+def hybrid_encrypt():
+
+    if "username" not in session:
+
+        return redirect("/")
+
+
+    file = request.files.get(
+        "file"
+    )
+
+
+    if not file or file.filename == "":
+
+        set_operation_result(
+            operation="HYBRID_ENCRYPT",
+            status="ERROR",
+            title="Hybrid Encryption Failed",
+            message="No file was selected.",
+            algorithm="ML-KEM-768 + SHA-256 + AES-256-GCM"
+        )
+
+        return redirect("/dashboard")
+
+
+    filename = secure_filename(
+        file.filename
+    )
+
+
+    if not filename:
+
+        set_operation_result(
+            operation="HYBRID_ENCRYPT",
+            status="ERROR",
+            title="Invalid File",
+            message="The selected filename is invalid.",
+            algorithm="ML-KEM-768 + SHA-256 + AES-256-GCM"
+        )
+
+        return redirect("/dashboard")
+===== APP.PY 760-840 =====
+            "FAILED"
+        )
+
+
+        set_operation_result(
+            operation="HYBRID_ENCRYPT",
+            status="ERROR",
+            title="Hybrid PQC Encryption Failed",
+            message=str(e),
+            filename=filename,
+            algorithm="ML-KEM-768 + SHA-256 + AES-256-GCM"
+        )
+
+
+        return redirect(
+            "/dashboard"
+        )
+
+
+# =========================================================
+# QUANTUMSHIELD HYBRID PQC DECRYPTION
+#
+# .pqc â†’ ML-KEM-768 â†’ SHA-256 â†’ AES-256-GCM
+# =========================================================
+
+@app.route(
+    "/hybrid-decrypt",
+    methods=["POST"]
+)
+def hybrid_decrypt():
+
+    if "username" not in session:
+
+        return redirect("/")
+
+
+    file = request.files.get(
+        "file"
+    )
+
+
+    if not file or file.filename == "":
+
+        set_operation_result(
+            operation="HYBRID_DECRYPT",
+            status="ERROR",
+            title="Hybrid Decryption Failed",
+            message="No QuantumShield file was selected.",
+            algorithm="ML-KEM-768 + SHA-256 + AES-256-GCM"
+        )
+
+        return redirect("/dashboard")
+
+
+    filename = secure_filename(
+        file.filename
+    )
+
+
+    if not filename.lower().endswith(
+        ".pqc"
+    ):
+
+        set_operation_result(
+            operation="HYBRID_DECRYPT",
+            status="ERROR",
+            title="Invalid QuantumShield File",
+            message="Please select a genuine .pqc file created by QuantumShield.",
+            filename=filename,
+            algorithm="ML-KEM-768 + SHA-256 + AES-256-GCM"
+        )
+
+        return redirect("/dashboard")
+
+
+    encrypted_path = os.path.join(
+        UPLOAD_FOLDER,
+        filename
+    )
+
+===== APP.PY 900-1000 =====
+        add_activity(
+            username,
+            "HYBRID_PQC_DECRYPTED",
+            filename,
+            "FAILED"
+        )
+
+
+        set_operation_result(
+            operation="HYBRID_DECRYPT",
+            status="ERROR",
+            title="Hybrid PQC Decryption Failed",
+            message=str(e),
+            filename=filename,
+            algorithm="ML-KEM-768 + SHA-256 + AES-256-GCM"
+        )
+
+
+        return redirect(
+            "/dashboard"
+        )
+
+
+# =========================================================
+# PHISHING URL CHECKER
+# =========================================================
+
+@app.route(
+    "/check-phishing",
+    methods=["POST"]
+)
+def check_phishing():
+
+    if "username" not in session:
+
+        return jsonify({
+            "success": False,
+            "message": "Please login first."
+        }), 401
+
+
+    username = session["username"]
+
+
+    url = request.form.get(
+        "url",
+        ""
+    ).strip()
+
+
+    if not url:
+
+        add_activity(
+            username,
+            "PHISHING_URL_CHECK",
+            "",
+            "FAILED"
+        )
+
+
+        return jsonify({
+            "success": False,
+            "message": "Please enter a URL."
+        }), 400
+
+
+    try:
+
+        # -------------------------------------------------
+        # Phishing URL Prediction
+        # -------------------------------------------------
+
+        result = predict_url(
+            url
+        )
+
+
+        detected_result = result.get(
+            "result"
+        )
+
+
+        # -------------------------------------------------
+        # Add Phishing Detection to Activity Log
+        # -------------------------------------------------
+
+        if detected_result == "PHISHING":
+
+            add_activity(
+                username,
+                "PHISHING_URL_DETECTED",
+                result.get("url"),
+                "DANGER"
+            )
+
+
+        else:
+
+            add_activity(
+                username,
