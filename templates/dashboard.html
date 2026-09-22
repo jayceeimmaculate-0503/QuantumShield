@@ -965,7 +965,130 @@ td {
 
 footer {
     font-size: 10px;
-}        
+} 
+/* =====================================================
+   FILE SECURITY OPERATION STATUS
+   ===================================================== */
+
+.file-operation-status {
+    margin-top: 25px;
+    padding: 24px;
+    border-radius: 18px;
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(0, 229, 255, 0.20);
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.25);
+    animation: statusFadeIn 0.4s ease;
+}
+
+@keyframes statusFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.file-status-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 18px;
+}
+
+.file-status-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 23px;
+    background: rgba(0, 229, 255, 0.10);
+    border: 1px solid rgba(0, 229, 255, 0.25);
+}
+
+.file-status-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #ffffff;
+}
+
+.file-status-success {
+    margin-top: 4px;
+    font-size: 13px;
+    color: #65f6b3;
+    font-weight: 600;
+}
+
+.file-status-details {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.file-status-item {
+    padding: 13px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.file-status-label {
+    display: block;
+    font-size: 10px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    margin-bottom: 5px;
+}
+
+.file-status-value {
+    display: block;
+    font-size: 13px;
+    color: #ffffff;
+    font-weight: 600;
+    word-break: break-word;
+}
+
+.encrypted-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 11px;
+    border-radius: 20px;
+    background: rgba(0, 229, 255, 0.10);
+    color: #62eaff;
+    border: 1px solid rgba(0, 229, 255, 0.25);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.decrypted-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 11px;
+    border-radius: 20px;
+    background: rgba(101, 246, 179, 0.10);
+    color: #65f6b3;
+    border: 1px solid rgba(101, 246, 179, 0.25);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.file-status-download {
+    margin-top: 18px;
+}
+
+@media (max-width: 700px) {
+    .file-status-details {
+        grid-template-columns: 1fr;
+    }
+}       
     </style>
 </head>
 
@@ -1380,118 +1503,96 @@ footer {
          OPERATION RESULT
     ====================================================== -->
 
-    {% if operation_result %}
+    <div id="operationResultContainer">
 
-        <div
-            class="
-                result-card
-                {% if operation_result.status == 'SUCCESS' %}
-                    result-success
-                {% else %}
-                    result-error
-                {% endif %}
-            "
-        >
+        {% if operation_result %}
 
-            <div class="result-header">
-
-                <div class="result-icon">
-
-                    {% if operation_result.status == "SUCCESS" %}
-                        ✓
+            <div
+                class="
+                    result-card
+                    {% if operation_result.status == 'SUCCESS' %}
+                        result-success
                     {% else %}
-                        !
+                        result-error
                     {% endif %}
+                "
+            >
 
-                </div>
+                <div class="result-header">
 
+                    <div class="result-icon">
 
-                <div>
+                        {% if operation_result.status == "SUCCESS" %}
+                            ✓
+                        {% else %}
+                            !
+                        {% endif %}
 
-                    <div class="result-title">
-                        {{ operation_result.title }}
+                    </div>
+
+                    <div>
+                        <div class="result-title">
+                            {{ operation_result.title }}
+                        </div>
                     </div>
 
                 </div>
 
-            </div>
+                <div class="result-message">
+                    {{ operation_result.message }}
+                </div>
 
+                <div class="result-details">
 
-            <div class="result-message">
-                {{ operation_result.message }}
-            </div>
+                    {% if operation_result.filename %}
+                    <div class="detail-box">
+                        <span class="detail-label">
+                            File / Target
+                        </span>
+                        <span class="detail-value">
+                            {{ operation_result.filename }}
+                        </span>
+                    </div>
+                    {% endif %}
 
+                    {% if operation_result.algorithm %}
+                    <div class="detail-box">
+                        <span class="detail-label">
+                            Algorithm
+                        </span>
+                        <span class="detail-value">
+                            {{ operation_result.algorithm }}
+                        </span>
+                    </div>
+                    {% endif %}
 
-            <div class="result-details">
-
-
-                {% if operation_result.filename %}
-
-                <div class="detail-box">
-
-                    <span class="detail-label">
-                        File / Target
-                    </span>
-
-                    <span class="detail-value">
-                        {{ operation_result.filename }}
-                    </span>
+                    {% if operation_result.integrity %}
+                    <div class="detail-box">
+                        <span class="detail-label">
+                            Security Status
+                        </span>
+                        <span class="detail-value">
+                            {{ operation_result.integrity }}
+                        </span>
+                    </div>
+                    {% endif %}
 
                 </div>
 
-                {% endif %}
-
-
-                {% if operation_result.algorithm %}
-
-                <div class="detail-box">
-
-                    <span class="detail-label">
-                        Algorithm
-                    </span>
-
-                    <span class="detail-value">
-                        {{ operation_result.algorithm }}
-                    </span>
-
-                </div>
-
-                {% endif %}
-
-
-                {% if operation_result.integrity %}
-
-                <div class="detail-box">
-
-                    <span class="detail-label">
-                        Security Status
-                    </span>
-
-                    <span class="detail-value">
-                        {{ operation_result.integrity }}
-                    </span>
-
-                </div>
-
+                {% if operation_result.download_file %}
+                    <a
+                        class="download-btn"
+                        href="/download/{{ operation_result.download_file }}"
+                    >
+                        📥 Download Output File
+                    </a>
                 {% endif %}
 
             </div>
 
+        {% endif %}
 
-            {% if operation_result.download_file %}
-
-                <a
-                    class="download-btn"
-                    href="/download/{{ operation_result.download_file }}"
-                >
-                    📥 Download Output File
-                </a>
-
-            {% endif %}
-
-        </div>
-
-    {% endif %}
+    </div>
 
 
     <!-- =====================================================
@@ -2028,6 +2129,165 @@ footer {
 
     }
 
+</script>
+
+
+
+<script>
+/* =====================================================
+   QUANTUMSHIELD OPERATION HANDLER
+   Hidden iframe submission - NO parent page navigation.
+===================================================== */
+(function () {
+
+    const operationRoutes = [
+        "/upload",
+        "/decrypt",
+        "/hybrid-encrypt",
+        "/hybrid-decrypt",
+        "/pqc-test"
+    ];
+
+    function showOperationError(message) {
+        const box = document.getElementById("operationResultContainer");
+        if (!box) return;
+
+        box.innerHTML = `
+            <div class="result-card result-error">
+                <div class="result-header">
+                    <div class="result-icon">!</div>
+                    <div>
+                        <div class="result-title">Operation Failed</div>
+                    </div>
+                </div>
+                <div class="result-message">${message}</div>
+            </div>
+        `;
+    }
+
+    function handleOperationForm(form) {
+        if (!form) return;
+
+        const action = form.getAttribute("action");
+        if (!operationRoutes.includes(action)) return;
+
+        form.addEventListener("submit", function (event) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+
+            const button = form.querySelector("button[type='submit']");
+            const originalText = button ? button.innerHTML : "";
+
+            if (button) {
+                button.disabled = true;
+                button.innerHTML = "⏳ Processing...";
+                button.style.opacity = "0.7";
+                button.style.cursor = "wait";
+            }
+
+            const iframe = document.createElement("iframe");
+            const iframeName = "qs_operation_frame_" + Date.now();
+
+            iframe.name = iframeName;
+            iframe.id = iframeName;
+            iframe.style.display = "none";
+            iframe.setAttribute("aria-hidden", "true");
+
+            let finished = false;
+
+            function restoreUI() {
+                const fileInput = form.querySelector("input[type='file']");
+                if (fileInput) fileInput.value = "";
+
+                if (button) {
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                    button.style.opacity = "";
+                    button.style.cursor = "";
+                }
+
+                setTimeout(function () {
+                    if (iframe.parentNode) {
+                        iframe.parentNode.removeChild(iframe);
+                    }
+                }, 100);
+            }
+
+            iframe.addEventListener("load", function () {
+                if (finished) return;
+
+                try {
+                    const doc = iframe.contentDocument ||
+                                iframe.contentWindow.document;
+
+                    /*
+                     * The iframe first loads about:blank.
+                     * Ignore that load.
+                     * After the POST, Flask redirects to /dashboard,
+                     * whose document URL is no longer about:blank.
+                     */
+                    if (!doc || !doc.location ||
+                        doc.location.href === "about:blank") {
+                        return;
+                    }
+
+                    const returnedResult =
+                        doc.querySelector("#operationResultContainer");
+
+                    const currentResult =
+                        document.getElementById("operationResultContainer");
+
+                    if (returnedResult && currentResult) {
+                        currentResult.innerHTML = returnedResult.innerHTML;
+                    } else {
+                        showOperationError(
+                            "The operation completed, but no result was returned."
+                        );
+                    }
+
+                    finished = true;
+                    restoreUI();
+
+                } catch (error) {
+                    console.error("QuantumShield operation error:", error);
+
+                    finished = true;
+                    showOperationError(
+                        "Unable to read the operation result."
+                    );
+                    restoreUI();
+                }
+            });
+
+            iframe.addEventListener("error", function () {
+                if (finished) return;
+
+                finished = true;
+                showOperationError(
+                    "Unable to complete the operation. Please try again."
+                );
+                restoreUI();
+            });
+
+            document.body.appendChild(iframe);
+
+            /*
+             * Only this form targets the hidden iframe.
+             * The main dashboard never receives the POST.
+             */
+            form.setAttribute("target", iframeName);
+
+            /*
+             * Native submit bypasses this submit event handler,
+             * preventing recursion.
+             */
+            HTMLFormElement.prototype.submit.call(form);
+        }, true);
+    }
+
+    document.querySelectorAll("form").forEach(handleOperationForm);
+
+})();
 </script>
 
 </body>
