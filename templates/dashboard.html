@@ -1287,7 +1287,7 @@ footer {
 
             </form>
 
-        </div>
+                    </div>
 
 
         <!-- AES DECRYPTION -->
@@ -1330,7 +1330,12 @@ footer {
 
             </form>
 
-        </div>
+                    </div>
+
+
+        <!-- AES OPERATION RESULT - FULL WIDTH -->
+
+        <div id="aesOperationResult" class="module-result module-result-wide"></div>
 
 
         <!-- HYBRID ENCRYPTION -->
@@ -1376,7 +1381,7 @@ footer {
 
             </form>
 
-        </div>
+                    </div>
 
 
         <!-- HYBRID DECRYPTION -->
@@ -1423,7 +1428,12 @@ footer {
 
             </form>
 
-        </div>
+                    </div>
+
+
+        <!-- HYBRID OPERATION RESULT - FULL WIDTH -->
+
+        <div id="hybridOperationResult" class="module-result module-result-wide"></div>
 
 
         <!-- PQC TEST -->
@@ -1494,6 +1504,8 @@ footer {
 
             </form>
 
+            <div id="pqcResult" class="module-result"></div>
+
         </div>
 
     </div>
@@ -1503,7 +1515,7 @@ footer {
          OPERATION RESULT
     ====================================================== -->
 
-    <div id="operationResultContainer">
+    <div id="operationResultSource" style="display: none;">
 
         {% if operation_result %}
 
@@ -2133,23 +2145,60 @@ footer {
 
 
 
+<style>
+/* =====================================================
+   MODULE-SPECIFIC OPERATION RESULTS
+===================================================== */
+.module-result {
+    margin-top: 18px;
+}
+
+.module-result:empty {
+    display: none;
+}
+
+.module-result-wide {
+    grid-column: 1 / -1;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.module-result-wide .result-card {
+    width: 100%;
+    box-sizing: border-box;
+}
+</style>
+
 <script>
 /* =====================================================
    QUANTUMSHIELD OPERATION HANDLER
-   Hidden iframe submission - NO parent page navigation.
+   Keeps every operation result inside its own module.
+   The main dashboard does NOT navigate or reload.
 ===================================================== */
 (function () {
 
-    const operationRoutes = [
-        "/upload",
-        "/decrypt",
-        "/hybrid-encrypt",
-        "/hybrid-decrypt",
-        "/pqc-test"
-    ];
+    const operationTargets = {
+        /* Both AES operations share one full-width result area
+           placed below the two AES cards. */
+        "/upload": "aesOperationResult",
+        "/decrypt": "aesOperationResult",
 
-    function showOperationError(message) {
-        const box = document.getElementById("operationResultContainer");
+        /* Both Hybrid PQC operations share one full-width result area
+           placed below the two Hybrid cards. */
+        "/hybrid-encrypt": "hybridOperationResult",
+        "/hybrid-decrypt": "hybridOperationResult",
+
+        /* PQC security test keeps its own result area. */
+        "/pqc-test": "pqcResult"
+    };
+
+    function getTarget(action) {
+        const id = operationTargets[action];
+        return id ? document.getElementById(id) : null;
+    }
+
+    function showOperationError(action, message) {
+        const box = getTarget(action);
         if (!box) return;
 
         box.innerHTML = `
@@ -2165,18 +2214,35 @@ footer {
         `;
     }
 
+    function restoreButton(button, originalText) {
+        if (!button) return;
+        button.disabled = false;
+        button.innerHTML = originalText;
+        button.style.opacity = "";
+        button.style.cursor = "";
+    }
+
     function handleOperationForm(form) {
-        if (!form) return;
+        if (!form || form.dataset.qsHandled === "1") return;
 
         const action = form.getAttribute("action");
-        if (!operationRoutes.includes(action)) return;
+        if (!operationTargets[action]) return;
 
-        form.addEventListener("submit", function (event) {
+        form.dataset.qsHandled = "1";
+
+        form.addEventListener("submit", async function (event) {
             event.preventDefault();
             event.stopImmediatePropagation();
 
             const button = form.querySelector("button[type='submit']");
             const originalText = button ? button.innerHTML : "";
+            const fileInput = form.querySelector("input[type='file']");
+
+            /* Only file-based operations require a selected file. */
+            if (fileInput && fileInput.files.length === 0) {
+                showOperationError(action, "Please choose a file before starting this operation.");
+                return;
+            }
 
             if (button) {
                 button.disabled = true;
@@ -2185,103 +2251,56 @@ footer {
                 button.style.cursor = "wait";
             }
 
-            const iframe = document.createElement("iframe");
-            const iframeName = "qs_operation_frame_" + Date.now();
+            try {
+                /*
+                   FormData(form) preserves the selected file and sends
+                   multipart/form-data to the existing Flask route.
+                */
+                const formData = new FormData(form);
 
-            iframe.name = iframeName;
-            iframe.id = iframeName;
-            iframe.style.display = "none";
-            iframe.setAttribute("aria-hidden", "true");
+                const response = await fetch(action, {
+                    method: "POST",
+                    body: formData,
+                    credentials: "same-origin",
+                    redirect: "follow"
+                });
 
-            let finished = false;
+                const html = await response.text();
 
-            function restoreUI() {
-                const fileInput = form.querySelector("input[type='file']");
-                if (fileInput) fileInput.value = "";
-
-                if (button) {
-                    button.disabled = false;
-                    button.innerHTML = originalText;
-                    button.style.opacity = "";
-                    button.style.cursor = "";
+                if (!response.ok) {
+                    throw new Error("Server returned HTTP " + response.status);
                 }
 
-                setTimeout(function () {
-                    if (iframe.parentNode) {
-                        iframe.parentNode.removeChild(iframe);
-                    }
-                }, 100);
-            }
+                /*
+                   Flask redirects to /dashboard. The returned dashboard
+                   contains the server-generated result in the hidden
+                   operationResultSource container. Copy only that result
+                   into the full-width result area belonging to
+                   the AES pair or Hybrid pair that started the operation.
+                */
+                const parser = new DOMParser();
+                const returnedDocument = parser.parseFromString(html, "text/html");
+                const returnedResult = returnedDocument.getElementById("operationResultSource");
+                const currentResult = getTarget(action);
 
-            iframe.addEventListener("load", function () {
-                if (finished) return;
-
-                try {
-                    const doc = iframe.contentDocument ||
-                                iframe.contentWindow.document;
-
-                    /*
-                     * The iframe first loads about:blank.
-                     * Ignore that load.
-                     * After the POST, Flask redirects to /dashboard,
-                     * whose document URL is no longer about:blank.
-                     */
-                    if (!doc || !doc.location ||
-                        doc.location.href === "about:blank") {
-                        return;
-                    }
-
-                    const returnedResult =
-                        doc.querySelector("#operationResultContainer");
-
-                    const currentResult =
-                        document.getElementById("operationResultContainer");
-
-                    if (returnedResult && currentResult) {
-                        currentResult.innerHTML = returnedResult.innerHTML;
-                    } else {
-                        showOperationError(
-                            "The operation completed, but no result was returned."
-                        );
-                    }
-
-                    finished = true;
-                    restoreUI();
-
-                } catch (error) {
-                    console.error("QuantumShield operation error:", error);
-
-                    finished = true;
-                    showOperationError(
-                        "Unable to read the operation result."
-                    );
-                    restoreUI();
+                if (returnedResult && currentResult) {
+                    currentResult.innerHTML = returnedResult.innerHTML;
+                } else {
+                    throw new Error("Operation result was not returned by the server.");
                 }
-            });
 
-            iframe.addEventListener("error", function () {
-                if (finished) return;
+                /* Reset only this form after a successful operation. */
+                form.reset();
 
-                finished = true;
+            } catch (error) {
+                console.error("QuantumShield operation error:", error);
                 showOperationError(
-                    "Unable to complete the operation. Please try again."
+                    action,
+                    "Unable to complete the operation. Please check the server and try again."
                 );
-                restoreUI();
-            });
-
-            document.body.appendChild(iframe);
-
-            /*
-             * Only this form targets the hidden iframe.
-             * The main dashboard never receives the POST.
-             */
-            form.setAttribute("target", iframeName);
-
-            /*
-             * Native submit bypasses this submit event handler,
-             * preventing recursion.
-             */
-            HTMLFormElement.prototype.submit.call(form);
+            } finally {
+                restoreButton(button, originalText);
+            }
         }, true);
     }
 
@@ -2290,5 +2309,40 @@ footer {
 })();
 </script>
 
+
+<script>
+/* =====================================================
+   PHISHING RESULT RESET
+   Clears the previous URL/result after a short display period
+   so the dashboard returns to its normal state.
+===================================================== */
+(function () {
+    const originalCheckPhishing = window.checkPhishing;
+
+    if (typeof originalCheckPhishing !== "function") return;
+
+    window.checkPhishing = async function () {
+        await originalCheckPhishing.apply(this, arguments);
+
+        const input = document.getElementById("urlInput");
+        const resultBox = document.getElementById("phishingResult");
+
+        if (!resultBox) return;
+
+        if (window.__qsPhishingResetTimer) {
+            clearTimeout(window.__qsPhishingResetTimer);
+        }
+
+        window.__qsPhishingResetTimer = setTimeout(function () {
+            if (input) input.value = "";
+            resultBox.innerHTML = "";
+            resultBox.style.display = "none";
+            resultBox.style.background = "";
+            resultBox.style.border = "";
+            resultBox.style.color = "";
+        }, 6000);
+    };
+})();
+</script>
 </body>
 </html>
