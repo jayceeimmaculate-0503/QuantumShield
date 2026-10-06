@@ -51,7 +51,7 @@ from database.models import (
 
 app = Flask(__name__)
 
-app.secret_key = "quantumshield_secret_key_2026"
+app.secret_key = os.getenv("SECRET_KEY")
 
 
 BASE_DIR = os.path.dirname(
@@ -84,8 +84,8 @@ os.makedirs(
 # =========================================================
 
 def send_otp_email(receiver_email, otp_code):
-    sender_email = "jayceeimmaculate@gmail.com"
-    sender_password = "vkzo ycrf oykj lzhg"
+    sender_email = os.getenv("MAIL_USERNAME")
+    sender_password = os.getenv("MAIL_PASSWORD")
 
     try:
         msg = MIMEText(f"Your QuantumShield Verification OTP is: {otp_code}\nValid for 5 minutes.")
