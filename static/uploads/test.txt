@@ -1,2 +1,0 @@
-QuantumShield Hybrid PQC Test
-ML-KEM-768 + AES-256-GCM
