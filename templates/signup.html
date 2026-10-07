@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>QuantumShield - Signup</title>
+
 <style>
     * {
         box-sizing: border-box;
@@ -38,7 +39,7 @@
         text-shadow: 0 0 18px rgba(0, 229, 255, 0.45);
     }
 
-    h2 {
+    h3 {
         margin: 0 0 25px 0;
         color: #ffffff;
         font-size: 24px;
@@ -94,7 +95,53 @@
         color: #64778b;
     }
 
-    button {
+    /* Password field wrapper */
+    .password-wrapper {
+        position: relative;
+        width: 100%;
+    }
+
+    /* Space for eye button */
+    .password-wrapper input {
+        padding-right: 48px;
+    }
+
+    /* Password visibility button */
+    .password-toggle {
+        position: absolute;
+
+        right: 10px;
+        top: 24px;
+
+        width: 32px;
+        height: 32px;
+
+        margin: 0;
+        padding: 0;
+
+        border: none;
+        background: transparent;
+
+        color: #8fa4b9;
+
+        font-size: 18px;
+        cursor: pointer;
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        transform: translateY(-50%);
+    }
+
+    .password-toggle:hover {
+        background: transparent;
+        box-shadow: none;
+        transform: translateY(-50%);
+        color: #00e5ff;
+    }
+
+    button[type="submit"] {
         width: 100%;
         height: 50px;
 
@@ -113,7 +160,7 @@
         transition: 0.2s ease;
     }
 
-    button:hover {
+    button[type="submit"]:hover {
         background: #18e4ff;
         box-shadow: 0 0 18px rgba(0, 229, 255, 0.35);
         transform: translateY(-1px);
@@ -148,6 +195,7 @@
     }
 </style>
 </head>
+
 <body>
 
     <h1>QuantumShield</h1>
@@ -155,55 +203,94 @@
 
     <form method="POST" action="/signup">
 
-    <label for="username">
-        Username
-    </label>
+        <label for="username">
+            Username
+        </label>
 
-    <input
-        type="text"
-        id="username"
-        name="username"
-        placeholder="Create a username"
-        autocomplete="username"
-        required
-    >
-
-
-    <label for="email">
-        Email
-    </label>
-
-    <input
-        type="email"
-        id="email"
-        name="email"
-        placeholder="Enter your email"
-        autocomplete="email"
-        required
-    >
+        <input
+            type="text"
+            id="username"
+            name="username"
+            placeholder="Create a username"
+            autocomplete="username"
+            required
+        >
 
 
-    <label for="password">
-        Password
-    </label>
+        <label for="email">
+            Email
+        </label>
 
-    <input
-        type="password"
-        id="password"
-        name="password"
-        placeholder="Create a password"
-        autocomplete="new-password"
-        required
-    >
+        <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="Enter your email"
+            autocomplete="email"
+            required
+        >
 
 
-    <button type="submit">
-        🔐 Create Account
-    </button>
+        <label for="password">
+            Password
+        </label>
 
-</form>
+        <div class="password-wrapper">
 
-    <p>Already have an account? <a href="/">Login here</a></p>
+            <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Create a password"
+                autocomplete="new-password"
+                required
+            >
+
+            <button
+                type="button"
+                class="password-toggle"
+                onclick="togglePassword()"
+                aria-label="Show password"
+            >
+                👁️
+            </button>
+
+        </div>
+
+
+        <button type="submit">
+            🔐 Create Account
+        </button>
+
+    </form>
+
+    <p>
+        Already have an account?
+        <a href="/">Login here</a>
+    </p>
+
+
+<script>
+function togglePassword() {
+
+    const passwordInput = document.getElementById("password");
+    const toggleButton = document.querySelector(".password-toggle");
+
+    if (passwordInput.type === "password") {
+
+        passwordInput.type = "text";
+        toggleButton.textContent = "🙈";
+        toggleButton.setAttribute("aria-label", "Hide password");
+
+    } else {
+
+        passwordInput.type = "password";
+        toggleButton.textContent = "👁️";
+        toggleButton.setAttribute("aria-label", "Show password");
+
+    }
+}
+</script>
 
 </body>
 </html>
