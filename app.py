@@ -10,8 +10,7 @@ from flask import (
 
 from werkzeug.utils import secure_filename
 import random
-import smtplib
-from email.mime.text import MIMEText
+import resend
 import os
 import psycopg2
 from encryption.phishing_utils import predict_url
@@ -70,29 +69,57 @@ os.makedirs(
 )
 
 
-# =========================================================
+# # =========================================================
 # EMAIL SENDER UTILITY
 # =========================================================
 
 def send_otp_email(receiver_email, otp_code):
-    sender_email = os.getenv("MAIL_USERNAME")
-    sender_password = os.getenv("MAIL_PASSWORD")
+    api_key = os.getenv("RESEND_API_KEY")
+
+    if not api_key:
+        print("[ERROR] RESEND_API_KEY is not configured.")
+        return False
 
     try:
-        msg = MIMEText(f"Your QuantumShield Verification OTP is: {otp_code}\nValid for 5 minutes.")
-        msg['Subject'] = "QuantumShield Security OTP"
-        msg['From'] = sender_email
-        msg['To'] = receiver_email
+        resend.api_key = api_key
 
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()
-        server.login(sender_email, sender_password)
-        server.sendmail(sender_email, receiver_email, msg.as_string())
-        server.quit()
-        print(f"\n[SUCCESS] OTP email successfully sent to {receiver_email}\n")
+        params = {
+            "from": "QuantumShield <onboarding@resend.dev>",
+            "to": [receiver_email],
+            "subject": "QuantumShield Security OTP",
+            "html": f"""
+                <html>
+                    <body>
+                        <h2>QuantumShield Security Verification</h2>
+
+                        <p>Your QuantumShield verification OTP is:</p>
+
+                        <h1>{otp_code}</h1>
+
+                        <p>This OTP is valid for 5 minutes.</p>
+
+                        <p>Please do not share this OTP with anyone.</p>
+
+                        <p>
+                            Regards,<br>
+                            QuantumShield Security Team
+                        </p>
+                    </body>
+                </html>
+            """
+        }
+
+        email = resend.Emails.send(params)
+
+        print(
+            f"[SUCCESS] OTP email sent to {receiver_email}. "
+            f"Email ID: {email}"
+        )
+
         return True
+
     except Exception as e:
-        print(f"\n[ERROR] Email sending failed: {e}\n")
+        print(f"[ERROR] Email sending failed: {e}")
         return False
 
 
