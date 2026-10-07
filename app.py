@@ -13,8 +13,7 @@ import random
 import smtplib
 from email.mime.text import MIMEText
 import os
-import sqlite3
-
+import psycopg2
 from encryption.phishing_utils import predict_url
 
 from encryption.pqc_utils import (
@@ -64,14 +63,6 @@ UPLOAD_FOLDER = os.path.join(
     "static",
     "uploads"
 )
-
-
-DATABASE = os.path.join(
-    BASE_DIR,
-    "database",
-    "quantumshield.db"
-)
-
 
 os.makedirs(
     UPLOAD_FOLDER,
@@ -302,9 +293,7 @@ def dashboard():
     if "username" not in session:
         return redirect("/")
 
-    conn = sqlite3.connect(
-        DATABASE
-    )
+    conn = psycopg2.connect(os.getenv("DATABASE_URL"))
     cursor = conn.cursor()
 
     cursor.execute("""

@@ -1,72 +1,59 @@
-import sqlite3
-import hashlib
 import os
+import hashlib
+import psycopg2
 
 
-# =========================================================
-# DATABASE PATH
-# =========================================================
+def get_db_connection():
+    database_url = os.getenv("DATABASE_URL")
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if not database_url:
+        raise RuntimeError(
+            "DATABASE_URL environment variable is not set."
+        )
 
-DATABASE = os.path.join(
-    BASE_DIR,
-    "database",
-    "quantumshield.db"
-)
+    return psycopg2.connect(database_url)
 
-
-# =========================================================
-# INITIALIZE DATABASE
-# =========================================================
 
 def init_db():
-    conn = sqlite3.connect(DATABASE)
+    conn = get_db_connection()
     cursor = conn.cursor()
 
-    # -----------------------------------------------------
-    # USERS TABLE (Added otp_code and otp_expiry columns)
-    # -----------------------------------------------------
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL,
-            otp_code TEXT,
-            otp_expiry TIMESTAMP
-        )
-    """)
+    try:
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                user_id SERIAL PRIMARY KEY,
+                username TEXT UNIQUE NOT NULL,
+                email TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                otp_code TEXT,
+                otp_expiry TIMESTAMP
+            )
+        """)
 
-    # -----------------------------------------------------
-    # ACTIVITY LOG TABLE
-    # -----------------------------------------------------
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS activity_logs (
-            log_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT,
-            action TEXT NOT NULL,
-            filename TEXT,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-            status TEXT
-        )
-    """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS activity_logs (
+                log_id SERIAL PRIMARY KEY,
+                username TEXT,
+                action TEXT NOT NULL,
+                filename TEXT,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                status TEXT
+            )
+        """)
 
-    conn.commit()
-    conn.close()
+        conn.commit()
+
+    finally:
+        cursor.close()
+        conn.close()
 
     print("Database initialized successfully!")
 
 
-# =========================================================
-# ADD USER
-# =========================================================
-
 def add_user(username, email, password):
-    conn = sqlite3.connect(DATABASE)
+    conn = get_db_connection()
     cursor = conn.cursor()
 
-    # SHA-256 password hashing
     password_hash = hashlib.sha256(
         password.encode()
     ).hexdigest()
@@ -75,52 +62,49 @@ def add_user(username, email, password):
         cursor.execute("""
             INSERT INTO users
             (username, email, password_hash)
-            VALUES (?, ?, ?)
-        """, (
-            username,
-            email,
-            password_hash
-        ))
+            VALUES (%s, %s, %s)
+        """, (username, email, password_hash))
 
         conn.commit()
+
         print("User added successfully!")
         success = True
 
-    except sqlite3.IntegrityError:
+    except psycopg2.IntegrityError:
+        conn.rollback()
+
         print("Username or email already exists!")
         success = False
 
-    conn.close()
+    finally:
+        cursor.close()
+        conn.close()
+
     return success
 
 
-# =========================================================
-# CHECK LOGIN
-# =========================================================
-
 def check_login(username, email, password):
-    conn = sqlite3.connect(DATABASE)
+    conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Hash entered password
     password_hash = hashlib.sha256(
         password.encode()
     ).hexdigest()
 
-    cursor.execute("""
-        SELECT *
-        FROM users
-        WHERE username = ?
-        AND email = ?
-        AND password_hash = ?
-    """, (
-        username,
-        email,
-        password_hash
-    ))
+    try:
+        cursor.execute("""
+            SELECT *
+            FROM users
+            WHERE username = %s
+            AND email = %s
+            AND password_hash = %s
+        """, (username, email, password_hash))
 
-    user = cursor.fetchone()
-    conn.close()
+        user = cursor.fetchone()
+
+    finally:
+        cursor.close()
+        conn.close()
 
     if user:
         return True
@@ -128,96 +112,104 @@ def check_login(username, email, password):
     return False
 
 
-# =========================================================
-# OTP FUNCTIONS (Updated for Email & 10 Mins Expiry)
-# =========================================================
-
 def save_otp(email, otp_code):
-    """Save or update OTP and set 10 minutes expiry for a specific email."""
-    conn = sqlite3.connect(DATABASE)
+    conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
-        UPDATE users
-        SET otp_code = ?, otp_expiry = datetime('now', '+10 minutes')
-        WHERE email = ?
-    """, (otp_code, email))
+    try:
+        cursor.execute("""
+            UPDATE users
+            SET otp_code = %s,
+                otp_expiry = CURRENT_TIMESTAMP
+                              + INTERVAL '10 minutes'
+            WHERE email = %s
+        """, (otp_code, email))
 
-    conn.commit()
-    conn.close()
+        conn.commit()
+
+    finally:
+        cursor.close()
+        conn.close()
 
 
 def verify_otp(email, otp_code):
-    """Verify if the OTP matches and has not expired (within 10 mins)."""
-    conn = sqlite3.connect(DATABASE)
+    conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
-        SELECT *
-        FROM users
-        WHERE email = ?
-        AND otp_code = ?
-        AND otp_expiry >= datetime('now')
-    """, (email, otp_code))
+    try:
+        cursor.execute("""
+            SELECT *
+            FROM users
+            WHERE email = %s
+            AND otp_code = %s
+            AND otp_expiry >= CURRENT_TIMESTAMP
+        """, (email, otp_code))
 
-    user = cursor.fetchone()
-    conn.close()
+        user = cursor.fetchone()
+
+    finally:
+        cursor.close()
+        conn.close()
 
     if user:
         return True
+
     return False
 
 
 def clear_otp(email):
-    """Clear or reset the OTP and expiry after successful verification."""
-    conn = sqlite3.connect(DATABASE)
+    conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
-        UPDATE users
-        SET otp_code = NULL, otp_expiry = NULL
-        WHERE email = ?
-    """, (email,))
+    try:
+        cursor.execute("""
+            UPDATE users
+            SET otp_code = NULL,
+                otp_expiry = NULL
+            WHERE email = %s
+        """, (email,))
 
-    conn.commit()
-    conn.close()
+        conn.commit()
 
+    finally:
+        cursor.close()
+        conn.close()
 
-# =========================================================
-# DELETE ACCOUNT (Danger Zone Feature)
-# =========================================================
 
 def delete_user(username, password):
-    """Verify password and delete user from database (keeping logs for security audit if needed)."""
-    conn = sqlite3.connect(DATABASE)
+    conn = get_db_connection()
     cursor = conn.cursor()
 
-    password_hash = hashlib.sha256(password.encode()).hexdigest()
+    password_hash = hashlib.sha256(
+        password.encode()
+    ).hexdigest()
 
-    # Check if user & password match first
-    cursor.execute("""
-        SELECT * FROM users
-        WHERE username = ? AND password_hash = ?
-    """, (username, password_hash))
+    try:
+        cursor.execute("""
+            SELECT *
+            FROM users
+            WHERE username = %s
+            AND password_hash = %s
+        """, (username, password_hash))
 
-    user = cursor.fetchone()
+        user = cursor.fetchone()
 
-    if user:
-        # NOTICE: Antha activity_logs delete panra line-ah ingrunthu eduthutom! 
-        # So logs safe-ah irukkum.
-        
-        # Delete user account only
-        cursor.execute("DELETE FROM users WHERE username = ?", (username,))
-        conn.commit()
+        if user:
+            cursor.execute("""
+                DELETE FROM users
+                WHERE username = %s
+            """, (username,))
+
+            conn.commit()
+
+            return True
+
+        return False
+
+    finally:
+        cursor.close()
         conn.close()
-        return True
 
-    conn.close()
-    return False
-
-# =========================================================
-# ADD SECURITY ACTIVITY LOG
-# =========================================================
 
 def add_activity(
     username,
@@ -225,26 +217,26 @@ def add_activity(
     filename="",
     status="SUCCESS"
 ):
-    conn = sqlite3.connect(DATABASE)
+    conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
-        INSERT INTO activity_logs
-        (username, action, filename, status)
-        VALUES (?, ?, ?, ?)
-    """, (
-        username,
-        action,
-        filename,
-        status
-    ))
+    try:
+        cursor.execute("""
+            INSERT INTO activity_logs
+            (username, action, filename, status)
+            VALUES (%s, %s, %s, %s)
+        """, (
+            username,
+            action,
+            filename,
+            status
+        ))
 
-    conn.commit()
-    conn.close()
+        conn.commit()
+
+    finally:
+        cursor.close()
+        conn.close()
 
 
-# =========================================================
-# MAIN
-# =========================================================
-
-    init_db()
+init_db()
