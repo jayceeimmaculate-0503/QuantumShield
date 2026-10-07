@@ -43,7 +43,7 @@ from database.models import (
     clear_otp,
     delete_user
 )
-
+init_db()
 
 # =========================================================
 # APPLICATION SETUP
