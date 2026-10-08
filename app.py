@@ -96,7 +96,7 @@ def send_otp_email(receiver_email, otp_code):
 
                         <h1>{otp_code}</h1>
 
-                        <p>This OTP is valid for 5 minutes.</p>
+                        <p>This OTP is valid for 10 minutes.</p>
 
                         <p>Please do not share this OTP with anyone.</p>
 
