@@ -15,6 +15,7 @@ pandas==3.0.5
 psycopg2-binary==2.9.13
 pycryptodome==3.23.0
 python-dateutil==2.9.0.post0
+python-dotenv==1.0.0
 scikit-learn==1.9.0
 scipy==1.18.1
 six==1.17.0
