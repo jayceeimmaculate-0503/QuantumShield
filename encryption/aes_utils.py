@@ -1,4 +1,3 @@
-print("AES_UTILS FILE LOADED")
 from Crypto.Cipher import AES
 
 from encryption.key_manager import (

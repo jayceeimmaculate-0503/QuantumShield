@@ -14,6 +14,8 @@ import resend
 import os
 import psycopg2
 from encryption.phishing_utils import predict_url
+from dotenv import load_dotenv
+load_dotenv()
 
 from encryption.pqc_utils import (
     generate_keypair,

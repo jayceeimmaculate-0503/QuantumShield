@@ -1,7 +1,10 @@
 import os
 import hashlib
 import psycopg2
+from dotenv import load_dotenv
 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 def get_db_connection():
     database_url = os.getenv("DATABASE_URL")
@@ -66,14 +69,12 @@ def add_user(username, email, password):
         """, (username, email, password_hash))
 
         conn.commit()
-
         print("User added successfully!")
         success = True
 
-    except psycopg2.IntegrityError:
+    except psycopg2.IntegrityError as e:
         conn.rollback()
-
-        print("Username or email already exists!")
+        print("Database integrity error:", repr(e))
         success = False
 
     finally:
